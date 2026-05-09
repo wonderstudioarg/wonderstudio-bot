@@ -53,15 +53,23 @@ async function obtenerInfoCampanas(adAccountId) {
     const campanas = r.data.data;
     console.log('Campanas recibidas:', campanas.length);
     if (!campanas || campanas.length === 0) return 'Hola! No hay campanas activas en tu cuenta ahora.';
-    let msg = 'Hola! Aqui el resumen de tus campanas de Meta Ads:\n\n';
-    campanas.forEach(c => {
-      msg += (c.status === 'ACTIVE' ? '🟢 ACTIVA' : '⏸ PAUSADA') + ' - ' + c.name + '\n';
-      if (c.daily_budget) msg += '  💰 Presupuesto: $' + (parseInt(c.daily_budget)/100).toFixed(2) + '/dia\n';
-      if (c.insights?.data?.[0]?.spend) msg += '  📊 Gastado: $' + parseFloat(c.insights.data[0].spend).toFixed(2) + '\n';
-      msg += '\n';
-    });
-    msg += 'Consulta con tu asesor de WonderStudio para mas detalles.';
+
+    const activas = campanas.filter(c => c.status === 'ACTIVE');
+    const pausadas = campanas.filter(c => c.status === 'PAUSED');
+
+    let msg = `📊 Resumen Meta Ads WonderStudio:\n\n`;
+    msg += `🟢 Campañas activas: ${activas.length}\n`;
+    msg += `⏸ Campañas pausadas: ${pausadas.length}\n\n`;
+
+    const totalGasto = campanas.reduce((sum, c) => {
+      return sum + parseFloat(c.insights?.data?.[0]?.spend || 0);
+    }, 0);
+
+    if (totalGasto > 0) msg += `💰 Total gastado: $${totalGasto.toFixed(2)}\n\n`;
+
+    msg += `Consultá con tu asesor de WonderStudio para más detalles.`;
     return msg;
+
   } catch (e) {
     console.error('Error Meta Ads completo:', JSON.stringify(e.response?.data));
     console.error('Error Meta Ads mensaje:', e.message);
