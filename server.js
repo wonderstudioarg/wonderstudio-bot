@@ -44,27 +44,25 @@ function detectarConsulta(texto) {
 async function obtenerInfoCampanas(adAccountId) {
   try {
     console.log('Consultando Meta Ads para:', adAccountId);
-    const r = await axios.get('https://graph.facebook.com/v21.0/' + adAccountId + '/campaigns', {
+
+    const hoy = new Date().toISOString().split('T')[0];
+
+    const r = await axios.get('https://graph.facebook.com/v21.0/' + adAccountId + '/insights', {
       params: {
-        fields: 'status,daily_budget,lifetime_budget',
+        fields: 'spend',
+        time_range: JSON.stringify({ since: hoy, until: hoy }),
+        level: 'account',
         access_token: CONFIG.META_TOKEN
       }
     });
-    const campanas = r.data.data;
-    if (!campanas || campanas.length === 0) return 'No hay campañas en tu cuenta ahora.';
 
-    const activas = campanas.filter(c => c.status === 'ACTIVE');
-    if (activas.length === 0) return 'No hay campañas activas en este momento.';
+    console.log('Insights respuesta:', JSON.stringify(r.data));
 
-    const totalDiario = activas.reduce((sum, c) => {
-      const budget = parseInt(c.daily_budget || c.lifetime_budget || 0);
-      return sum + budget;
-    }, 0);
+    const data = r.data.data;
+    if (!data || data.length === 0) return '💰 Inversión de hoy: $0.00';
 
-    console.log('Total calculado en centavos:', totalDiario);
-    console.log('Muestra primera campaña activa:', JSON.stringify(activas[0]));
-
-    return `💰 Inversión diaria activa: $${(totalDiario / 100).toFixed(2)}/día`;
+    const gasto = parseFloat(data[0].spend || 0);
+    return `💰 Inversión de hoy: $${gasto.toFixed(2)}`;
 
   } catch (e) {
     console.error('Error Meta Ads completo:', JSON.stringify(e.response?.data));
