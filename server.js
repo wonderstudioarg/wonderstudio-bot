@@ -46,19 +46,23 @@ async function obtenerInfoCampanas(adAccountId) {
     console.log('Consultando Meta Ads para:', adAccountId);
     const r = await axios.get('https://graph.facebook.com/v21.0/' + adAccountId + '/campaigns', {
       params: {
-        fields: 'status,daily_budget',
+        fields: 'status,daily_budget,lifetime_budget',
         access_token: CONFIG.META_TOKEN
       }
     });
     const campanas = r.data.data;
-    if (!campanas || campanas.length === 0) return 'Hola! No hay campañas en tu cuenta ahora.';
+    if (!campanas || campanas.length === 0) return 'No hay campañas en tu cuenta ahora.';
 
     const activas = campanas.filter(c => c.status === 'ACTIVE');
-    if (activas.length === 0) return 'Hola! No hay campañas activas en este momento.';
+    if (activas.length === 0) return 'No hay campañas activas en este momento.';
 
     const totalDiario = activas.reduce((sum, c) => {
-      return sum + parseInt(c.daily_budget || 0);
+      const budget = parseInt(c.daily_budget || c.lifetime_budget || 0);
+      return sum + budget;
     }, 0);
+
+    console.log('Total calculado en centavos:', totalDiario);
+    console.log('Muestra primera campaña activa:', JSON.stringify(activas[0]));
 
     return `💰 Inversión diaria activa: $${(totalDiario / 100).toFixed(2)}/día`;
 
