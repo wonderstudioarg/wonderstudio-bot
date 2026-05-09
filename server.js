@@ -46,29 +46,21 @@ async function obtenerInfoCampanas(adAccountId) {
     console.log('Consultando Meta Ads para:', adAccountId);
     const r = await axios.get('https://graph.facebook.com/v21.0/' + adAccountId + '/campaigns', {
       params: {
-        fields: 'name,status,daily_budget,lifetime_budget,insights{spend}',
+        fields: 'status,daily_budget',
         access_token: CONFIG.META_TOKEN
       }
     });
     const campanas = r.data.data;
-    console.log('Campanas recibidas:', campanas.length);
-    if (!campanas || campanas.length === 0) return 'Hola! No hay campanas activas en tu cuenta ahora.';
+    if (!campanas || campanas.length === 0) return 'Hola! No hay campañas en tu cuenta ahora.';
 
     const activas = campanas.filter(c => c.status === 'ACTIVE');
-    const pausadas = campanas.filter(c => c.status === 'PAUSED');
+    if (activas.length === 0) return 'Hola! No hay campañas activas en este momento.';
 
-    let msg = `📊 Resumen Meta Ads WonderStudio:\n\n`;
-    msg += `🟢 Campañas activas: ${activas.length}\n`;
-    msg += `⏸ Campañas pausadas: ${pausadas.length}\n\n`;
-
-    const totalGasto = campanas.reduce((sum, c) => {
-      return sum + parseFloat(c.insights?.data?.[0]?.spend || 0);
+    const totalDiario = activas.reduce((sum, c) => {
+      return sum + parseInt(c.daily_budget || 0);
     }, 0);
 
-    if (totalGasto > 0) msg += `💰 Total gastado: $${totalGasto.toFixed(2)}\n\n`;
-
-    msg += `Consultá con tu asesor de WonderStudio para más detalles.`;
-    return msg;
+    return `💰 Inversión diaria activa: $${(totalDiario / 100).toFixed(2)}/día`;
 
   } catch (e) {
     console.error('Error Meta Ads completo:', JSON.stringify(e.response?.data));
