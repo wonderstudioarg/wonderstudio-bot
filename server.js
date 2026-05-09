@@ -8,7 +8,7 @@ const CONFIG = {
   TWILIO_ACCOUNT_SID: process.env.TWILIO_SID,
   TWILIO_AUTH_TOKEN: process.env.TWILIO_TOKEN,
   TWILIO_WHATSAPP_NUMBER: 'whatsapp:+14155238886',
-  META_TOKEN: 'EAAOQozHwZAEgBRRgEwrMpMRuEdJ6yPTOEFyBKK7Q71HswGnM0OzlbbtlZBRfbnTPOaZBNrWh8m4f696KeZBuReqfzzEqmrptHosJv60EcOOGf21BWBDTpH3BTDYCD5a58SF02rDcMvP52jncbJV8KV11jz7DnT53Sty7mz3xUOLA9A2fvufgOftjSvio6cSkijvmAlwNAZBYhUQKLtpMfNu1EldvFwCKgvfK45rgSkxOyn9FZAyKnYSezddS5LDh0o0KrNMfIujhMZD',
+  META_TOKEN: process.env.META_TOKEN,
   CLIENTES: {
     '+5491138413828': 'act_580004939246874'
   }
@@ -33,7 +33,7 @@ app.post('/webhook', async (req, res) => {
     }
     await enviarMensaje(req.body.From, respuesta);
   } catch (e) {
-    console.error('Error:', e.message);
+    console.error('Error webhook:', e.message);
   }
 });
 
@@ -43,22 +43,28 @@ function detectarConsulta(texto) {
 
 async function obtenerInfoCampanas(adAccountId) {
   try {
-    const r = await axios.get('https://graph.facebook.com/v25.0/' + adAccountId + '/campaigns', {
-      params: { fields: 'name,status,daily_budget,lifetime_budget,insights{spend}', access_token: CONFIG.META_TOKEN }
+    console.log('Consultando Meta Ads para:', adAccountId);
+    const r = await axios.get('https://graph.facebook.com/v21.0/' + adAccountId + '/campaigns', {
+      params: {
+        fields: 'name,status,daily_budget,lifetime_budget,insights{spend}',
+        access_token: CONFIG.META_TOKEN
+      }
     });
     const campanas = r.data.data;
+    console.log('Campanas recibidas:', campanas.length);
     if (!campanas || campanas.length === 0) return 'Hola! No hay campanas activas en tu cuenta ahora.';
     let msg = 'Hola! Aqui el resumen de tus campanas de Meta Ads:\n\n';
     campanas.forEach(c => {
-      msg += (c.status === 'ACTIVE' ? 'ACTIVA' : 'PAUSADA') + ' - ' + c.name + '\n';
-      if (c.daily_budget) msg += '  Presupuesto: $' + (parseInt(c.daily_budget)/100).toFixed(2) + '/dia\n';
-      if (c.insights?.data?.[0]?.spend) msg += '  Gastado: $' + parseFloat(c.insights.data[0].spend).toFixed(2) + '\n';
+      msg += (c.status === 'ACTIVE' ? '🟢 ACTIVA' : '⏸ PAUSADA') + ' - ' + c.name + '\n';
+      if (c.daily_budget) msg += '  💰 Presupuesto: $' + (parseInt(c.daily_budget)/100).toFixed(2) + '/dia\n';
+      if (c.insights?.data?.[0]?.spend) msg += '  📊 Gastado: $' + parseFloat(c.insights.data[0].spend).toFixed(2) + '\n';
       msg += '\n';
     });
     msg += 'Consulta con tu asesor de WonderStudio para mas detalles.';
     return msg;
   } catch (e) {
-    console.error('Error Meta Ads:', e.response?.data || e.message);
+    console.error('Error Meta Ads completo:', JSON.stringify(e.response?.data));
+    console.error('Error Meta Ads mensaje:', e.message);
     return 'No pude acceder a los datos ahora. Intenta mas tarde o contacta a tu asesor.';
   }
 }
