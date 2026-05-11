@@ -39,7 +39,7 @@ async function cargarClientes() {
     const rows = r.data.values || [];
     const mapa = {};
     for (const row of rows) {
-      const telefono = row[0]?.trim();
+const telefono = row[0]?.trim().replace(/^'+/, '');
       const adAccountId = row[1]?.trim();
       if (telefono && adAccountId) {
         mapa[telefono] = adAccountId;
