@@ -48,6 +48,8 @@ async function cargarClientes() {
     clientesCache = mapa;
     cacheTime = ahora;
     console.log('Clientes cargados:', Object.keys(mapa).length);
+console.log('Busqueda de:', '+5491169390042', '=', mapa['+5491169390042']);
+console.log('Primeros 3 telefonos:', Object.keys(mapa).slice(0, 3));
     return mapa;
   } catch (e) {
     console.error('Error cargando clientes:', e.message);
