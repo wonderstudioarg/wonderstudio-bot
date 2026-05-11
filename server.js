@@ -39,7 +39,8 @@ async function cargarClientes() {
     const rows = r.data.values || [];
     const mapa = {};
     for (const row of rows) {
-const telefono = row[0]?.trim().replace(/^'+/, '');
+      const raw = row[0] || '';
+      const telefono = raw.trim().replace(/[^+0-9]/g, '');
       const adAccountId = row[1]?.trim();
       if (telefono && adAccountId) {
         mapa[telefono] = adAccountId;
@@ -48,8 +49,9 @@ const telefono = row[0]?.trim().replace(/^'+/, '');
     clientesCache = mapa;
     cacheTime = ahora;
     console.log('Clientes cargados:', Object.keys(mapa).length);
-console.log('Busqueda de:', '+5491169390042', '=', mapa['+5491169390042']);
-console.log('Primeros 3 telefonos:', Object.keys(mapa).slice(0, 3));
+    const keys = Object.keys(mapa).slice(0, 3);
+    console.log('Primeros 3 telefonos:', JSON.stringify(keys));
+    console.log('Busqueda de +5491169390042:', mapa['+5491169390042']);
     return mapa;
   } catch (e) {
     console.error('Error cargando clientes:', e.message);
